@@ -25,4 +25,22 @@ utiles.hasingPassword = (passwordHasing) => {
     }
 
 }
+utiles.tokenGenerate = (stringLength) => {
+  if (typeof stringLength === 'number' && stringLength > 0) {
+    const possibleCharacters = 'abcdefghijklmnopqrstuvwxyz1234567890';
+    let output = '';
+
+    for (let i = 0; i < stringLength; i++) {
+      const randomChar = possibleCharacters.charAt(
+        Math.floor(Math.random() * possibleCharacters.length)
+      );
+      output += randomChar;
+    }
+
+    return output;
+  } else {
+    return false;
+  }
+};
+
 module.exports = utiles;
