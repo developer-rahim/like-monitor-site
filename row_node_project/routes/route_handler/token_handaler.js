@@ -14,7 +14,18 @@ handler.tokenHander = (requestPropertise, callback) => {
 }
 handler._token = {};
 handler._token.get = (requestPropertise, callback) => {
+    const id = typeof requestPropertise.quaryStringObject.id === 'string' && requestPropertise.quaryStringObject.id.trim().length > 0 ? requestPropertise.quaryStringObject.id : false;
+    if (id) {
+        userData.read('tokens', id, (err, tokendata) => {
+            const user = { ...parseJson(tokendata) }
+            if (!err && user) {
 
+                callback(200, user)
+            }
+        })
+    } else {
+        callback(400, { "error": 'Not found user' })
+    }
 
 
 }
