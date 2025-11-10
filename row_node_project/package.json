@@ -1,0 +1,11 @@
+{
+  "name": "row_node_project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "NODE_ENV=local nodemon index",
+      "production": "NODE_ENV=production nodemon index",
+    "test": "echo \"Error found\" && exit 1"
+  }
+}
