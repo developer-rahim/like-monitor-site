@@ -1,6 +1,7 @@
 const userData = require('../../data_crud/data')
 const { hasingPassword } = require('../../helper/utiles')
 const { parseJson } = require('../../helper/utiles')
+const tokenHandeler = require('./token_handaler');
 const handler = {}
 
 handler.userHander = (requestPropertise, callback) => {
@@ -16,6 +17,16 @@ handler._user.get = (requestPropertise, callback) => {
 
     const phone = typeof requestPropertise.quaryStringObject.phone === 'string' && requestPropertise.quaryStringObject.phone.trim().length > 0 ? requestPropertise.quaryStringObject.phone : false;
     if (phone) {
+        if (!requestPropertise.headersObject.token) {
+           callback(403,{"error":"token need"}) ;
+           return;
+        }
+        tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
+            if (!err) {
+                callback(403, { "error": "Unauthenticated" })
+                return;
+            }
+        })
         userData.read('users', phone, (err, data) => {
             const user = { ...parseJson(data) }
             if (!err && data) {
@@ -74,6 +85,16 @@ handler._user.put = (requestPropertise, callback) => {
     const password = typeof requestPropertise.body.password === 'string' && requestPropertise.body.password.trim().length >= 6 ? requestPropertise.body.password : false;
 
     if (phone) {
+            if (!requestPropertise.headersObject.token) {
+           callback(403,{"error":"token need"}) ;
+           return;
+        }
+        tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
+            if (!err) {
+                callback(403, { "error": "Unauthenticated" })
+                return;
+            }
+        })
         if (lastName || firstName || phone) {
             userData.read('users', phone, (err, udata) => {
                 const data = { ...parseJson(udata) }
@@ -112,6 +133,16 @@ handler._user.delete = (requestPropertise, callback) => {
     const phone = typeof requestPropertise.quaryStringObject.phone === 'string' && requestPropertise.quaryStringObject.phone.trim().length > 0 ? requestPropertise.quaryStringObject.phone : false;
 
     if (phone) {
+            if (!requestPropertise.headersObject.token) {
+           callback(403,{"error":"token need"}) ;
+           return;
+        }
+        tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
+            if (!err) {
+                callback(403, { "error": "Unauthenticated" })
+                return;
+            }
+        })
         userData.read('users', phone, (err, data) => {
             if (!err && data) {
                 userData.delete('users', phone, (error) => {

@@ -53,6 +53,7 @@ reqResHandler.handleReqRes = ((req, res) => {
             playload = typeof (playload) === 'object' ? playload : {};
             playloadStirng = JSON.stringify(playload);
 
+            
             res.writeHeader(statusCode, { 'Content-Type': 'application/json' });
             res.end(playloadStirng);
         });

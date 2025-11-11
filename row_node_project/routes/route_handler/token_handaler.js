@@ -5,69 +5,69 @@ const { tokenGenerate } = require('../../helper/utiles')
 const handler = {}
 
 handler.tokenHander = (requestPropertise, callback) => {
-    const acceptMethod = ['get', 'post', 'put', 'delete'];
-    if (acceptMethod.indexOf(requestPropertise.reqMethod) > -1) {
-        handler._token[requestPropertise.reqMethod](requestPropertise, callback);
-    } else {
-        callback(405, { error: 'Method not allowed' });
-    }
+  const acceptMethod = ['get', 'post', 'put', 'delete'];
+  if (acceptMethod.indexOf(requestPropertise.reqMethod) > -1) {
+    handler._token[requestPropertise.reqMethod](requestPropertise, callback);
+  } else {
+    callback(405, { error: 'Method not allowed' });
+  }
 }
 handler._token = {};
 handler._token.get = (requestPropertise, callback) => {
-    const id = typeof requestPropertise.quaryStringObject.id === 'string' && requestPropertise.quaryStringObject.id.trim().length > 0 ? requestPropertise.quaryStringObject.id : false;
-    if (id) {
-        userData.read('tokens', id, (err, tokendata) => {
-            const user = { ...parseJson(tokendata) }
-            if (!err && user) {
+  const id = typeof requestPropertise.quaryStringObject.id === 'string' && requestPropertise.quaryStringObject.id.trim().length > 0 ? requestPropertise.quaryStringObject.id : false;
+  if (id) {
+    userData.read('tokens', id, (err, tokendata) => {
+      const user = { ...parseJson(tokendata) }
+      if (!err && user) {
 
-                callback(200, user)
-            }
-        })
-    } else {
-        callback(400, { "error": 'Not found user' })
-    }
+        callback(200, user)
+      }
+    })
+  } else {
+    callback(400, { "error": 'Not found user' })
+  }
 
 
 }
 handler._token.post = (requestPropertise, callback) => {
-    const phone = typeof requestPropertise.body.phone === 'string' && requestPropertise.body.phone.trim().length > 0 ? requestPropertise.body.phone : false;
-    const password = typeof requestPropertise.body.password === 'string' && requestPropertise.body.password.trim().length >= 6 ? requestPropertise.body.password : false;
+  const phone = typeof requestPropertise.body.phone === 'string' && requestPropertise.body.phone.trim().length > 0 ? requestPropertise.body.phone : false;
+  const password = typeof requestPropertise.body.password === 'string' && requestPropertise.body.password.trim().length >= 6 ? requestPropertise.body.password : false;
 
-    if (phone && password) {
-        userData.read('users', phone, (err, data) => {
-            if (!err) {
-                const userdata = { ...parseJson(data) }
-                let hasPassword = hasingPassword(password);
-                console.log(hasPassword)
-                console.log(data.password)
-                if (hasPassword === userdata.password) {
-                    let tokenId = tokenGenerate(20);
-                    let expireData =  Date.now() + 60 * 60 * 1000;
-                    let tokenObject = {
-                        phone, "id": tokenId,
-                        expireData
-                    }
-                    userData.create('tokens', tokenId, tokenObject, (err2) => {
-                        if (!err2) {
-                            callback(200, tokenObject)
-                        } else {
-                            callback(500, { "error": "serverside error" })
-                        }
-                    })
-
-                } else {
-                    callback(400, { "error": "passwor/phone not match" })
-                }
+  if (phone && password) {
+    userData.read('users', phone, (err, data) => {
+      if (!err) {
+        const userdata = { ...parseJson(data) }
+        let hasPassword = hasingPassword(password);
+        console.log(hasPassword)
+        console.log(data.password)
+        if (hasPassword === userdata.password) {
+          let tokenId = tokenGenerate(20);
+          let expireData = Date.now() + 60 * 60 * 1000;
+          let tokenObject = {
+            phone, "id": tokenId,
+            expireData
+          }
+          userData.create('tokens', tokenId, tokenObject, (err2) => {
+            if (!err2) {
+              callback(200, tokenObject)
             } else {
-                callback(404, { message: 'User not found' });
+              callback(500, { "error": "serverside error" })
             }
-        })
-    }
+          })
+
+        } else {
+          callback(400, { "error": "passwor/phone not match" })
+        }
+      } else {
+        callback(404, { message: 'User not found' });
+      }
+    })
+  }
 }
 handler._token.put = (requestPropertise, callback) => {
   const id =
     typeof requestPropertise.body.id === 'string' &&
-    requestPropertise.body.id.trim().length === 20
+      requestPropertise.body.id.trim().length === 20
       ? requestPropertise.body.id.trim()
       : false;
 
@@ -110,7 +110,46 @@ handler._token.put = (requestPropertise, callback) => {
 };
 
 handler._token.delete = (requestPropertise, callback) => {
+  const id =
+    typeof requestPropertise.body.id === 'string' &&
+      requestPropertise.body.id.trim().length === 20
+      ? requestPropertise.body.id.trim()
+      : false;
 
+  if (id) {
+    userData.read('tokens', id, (err, data) => {
+      if (!err && data) {
+        userData.delete('tokens', id, (error) => {
+          if (!error) {
+            callback(200, { "message": "Token deleted successfully" });
+          } else {
+            callback(500, { "error": error });
+          }
+        });
+      } else {
+        callback(404, { "error": "Token not found" });
+      }
+    });
+  } else {
+    callback(400, { "error": "Invalid Token id" });
+  }
 };
+// callback(success, errorObject)
+handler._token.verify = (id, phone, callback) => {
+  userData.read('tokens', id, (err, tokenData) => {
+    if (!err && tokenData) {
+      const data = parseJson(tokenData);
+
+      if (data.phone === phone && data.expireData > Date.now() && data.token === id) {
+        callback(true);  // success
+      } else {
+        callback(false); // failed validation
+      }
+    } else {
+      callback(false); // token not found
+    }
+  });
+};
+
 
 module.exports = handler;
