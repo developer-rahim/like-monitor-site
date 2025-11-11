@@ -42,7 +42,7 @@ handler._token.post = (requestPropertise, callback) => {
                 console.log(data.password)
                 if (hasPassword === userdata.password) {
                     let tokenId = tokenGenerate(20);
-                    let expireData = Date.now() + 60 + 60 * 1000;
+                    let expireData =  Date.now() + 60 * 60 * 1000;
                     let tokenObject = {
                         phone, "id": tokenId,
                         expireData
@@ -64,6 +64,51 @@ handler._token.post = (requestPropertise, callback) => {
         })
     }
 }
+handler._token.put = (requestPropertise, callback) => {
+  const id =
+    typeof requestPropertise.body.id === 'string' &&
+    requestPropertise.body.id.trim().length === 20
+      ? requestPropertise.body.id.trim()
+      : false;
+
+  const extend =
+    typeof requestPropertise.body.extend === 'boolean' &&
+    requestPropertise.body.extend === true;
+
+  if (!extend || !id) {
+    return callback(400, { error: 'Invalid token ID or missing extend flag' });
+  }
+
+  userData.read('tokens', id, (err, tokenData) => {
+    if (err || !tokenData) {
+      return callback(404, { error: 'Token not found' });
+    }
+
+    let token;
+    try {
+      token = parseJson(tokenData);
+    } catch (parseErr) {
+      return callback(500, { error: 'Token data corrupted' });
+    }
+
+    if (token.expireData <= Date.now()) {
+      return callback(400, { error: 'Token already expired' });
+    }
+
+    // Extend expiry 1 hour
+    token.expireData = Date.now() + 60 * 60 * 1000;
+
+    // Update token
+    userData.update('tokens', id, token, (err2) => {
+      if (!err2) {
+        return callback(200, { message: 'Token successfully extended', token });
+      } else {
+        return callback(500, { error: 'Failed to update token file' });
+      }
+    });
+  });
+};
+
 handler._token.delete = (requestPropertise, callback) => {
 
 };
