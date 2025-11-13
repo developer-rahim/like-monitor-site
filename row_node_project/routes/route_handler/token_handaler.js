@@ -1,7 +1,7 @@
 const userData = require('../../data_crud/data')
 const { hasingPassword } = require('../../helper/utiles')
 const { parseJson } = require('../../helper/utiles')
-const { tokenGenerate } = require('../../helper/utiles')
+const { randomStringGenerate: tokenGenerate } = require('../../helper/utiles')
 const handler = {}
 
 handler.tokenHander = (requestPropertise, callback) => {
@@ -96,7 +96,7 @@ handler._token.put = (requestPropertise, callback) => {
     }
 
     // Extend expiry 1 hour
-    token.expireData = Date.now() + 60 * 60 * 1000;
+    token.expireData = Date.now() + 60 * 60 * 60 * 1000;
 
     // Update token
     userData.update('tokens', id, token, (err2) => {
@@ -139,17 +139,23 @@ handler._token.verify = (id, phone, callback) => {
   userData.read('tokens', id, (err, tokenData) => {
     if (!err && tokenData) {
       const data = parseJson(tokenData);
-
-      if (data.phone === phone && data.expireData > Date.now() && data.token === id) {
-        callback(true);  // success
+      //  console.log('token Data object',data)
+      // console.log('phone is ', data.phone === phone)
+      // console.log('token is not  expaired  ', data.expireData > Date.now())
+      // console.log('given  token is ', id)
+      // console.log('store token is ', data.token)
+      //console.log('given and and store token is ', data.token === id)
+      if (data.phone === phone && data.expireData > Date.now() && data.id === id) {
+        callback(true, data); // ✅ send parsed data instead of raw JSON string
       } else {
-        callback(false); // failed validation
+        callback(false);
       }
     } else {
-      callback(false); // token not found
+      callback(false);
     }
   });
 };
+
 
 
 module.exports = handler;

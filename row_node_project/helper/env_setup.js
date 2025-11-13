@@ -3,12 +3,14 @@ const env = {};
 env.local = {
     port: 3000,
     envName: "local",
-    secretKey: 'hbfrvdeaqwnrabgtefvw'
+    secretKey: 'hbfrvdeaqwnrabgtefvw',
+    maxChecks:5
 }
 env.production = {
     port: 5001,
     envName: "production",
-     secretKey: 'rgqh4brrvdbrwhwefvw'
+     secretKey: 'rgqh4brrvdbrwhwefvw',
+     maxChecks:5
 }
 
 /// determine current environment

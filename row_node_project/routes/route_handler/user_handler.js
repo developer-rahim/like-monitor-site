@@ -14,31 +14,56 @@ handler.userHander = (requestPropertise, callback) => {
 }
 handler._user = {};
 handler._user.get = (requestPropertise, callback) => {
+    const phone =
+        typeof requestPropertise.quaryStringObject.phone === 'string' &&
+            requestPropertise.quaryStringObject.phone.trim().length > 0
+            ? requestPropertise.quaryStringObject.phone.trim()
+            : false;
 
-    const phone = typeof requestPropertise.quaryStringObject.phone === 'string' && requestPropertise.quaryStringObject.phone.trim().length > 0 ? requestPropertise.quaryStringObject.phone : false;
-    if (phone) {
-        if (!requestPropertise.headersObject.token) {
-           callback(403,{"error":"token need"}) ;
-           return;
-        }
-        tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
-            if (!err) {
-                callback(403, { "error": "Unauthenticated" })
-                return;
-            }
-        })
-        userData.read('users', phone, (err, data) => {
-            const user = { ...parseJson(data) }
-            if (!err && data) {
-                delete user.password;
-                callback(200, user)
-            }
-        })
-    } else {
-        callback(400, { "error": 'Not found user' })
+    if (!phone) {
+        callback(400, { error: 'Phone number required' });
+        return;
     }
 
-}
+    const token = requestPropertise.headersObject.token;
+    if (!token) {
+        callback(403, { error: 'Token required' });
+        return;
+    }
+
+    // ✅ Verify token first
+    tokenHandeler._token.verify(token, phone, (isValid, tokenData) => {
+        if (!isValid) {
+            callback(403, { error: 'Unauthenticated' });
+            return;
+        }
+
+        // ✅ tokenData available here (you can use it internally)
+        console.log('Verified token data:', tokenData);
+
+        // For example: you can check expiration, log user, etc.
+        if (Date.now() > tokenData.expireData) {
+            callback(403, { error: 'Token expired' });
+            return;
+        }
+
+        // ✅ Now read user only if token is valid
+        userData.read('users', phone, (err, data) => {
+            if (err || !data) {
+                callback(404, { error: 'User not found' });
+                return;
+            }
+
+            const user = { ...parseJson(data) };
+            delete user.password;
+
+            // ✅ Send only user data — no token info in response
+            callback(200, user);
+        });
+    });
+};
+
+
 handler._user.post = (requestPropertise, callback) => {
     const firstName = typeof requestPropertise.body.firstName === 'string' && requestPropertise.body.firstName.trim().length > 0 ? requestPropertise.body.firstName : false;
     const lastName = typeof requestPropertise.body.lastName === 'string' && requestPropertise.body.lastName.trim().length > 0 ? requestPropertise.body.lastName : false;
@@ -85,9 +110,9 @@ handler._user.put = (requestPropertise, callback) => {
     const password = typeof requestPropertise.body.password === 'string' && requestPropertise.body.password.trim().length >= 6 ? requestPropertise.body.password : false;
 
     if (phone) {
-            if (!requestPropertise.headersObject.token) {
-           callback(403,{"error":"token need"}) ;
-           return;
+        if (!requestPropertise.headersObject.token) {
+            callback(403, { "error": "token need" });
+            return;
         }
         tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
             if (!err) {
@@ -133,9 +158,9 @@ handler._user.delete = (requestPropertise, callback) => {
     const phone = typeof requestPropertise.quaryStringObject.phone === 'string' && requestPropertise.quaryStringObject.phone.trim().length > 0 ? requestPropertise.quaryStringObject.phone : false;
 
     if (phone) {
-            if (!requestPropertise.headersObject.token) {
-           callback(403,{"error":"token need"}) ;
-           return;
+        if (!requestPropertise.headersObject.token) {
+            callback(403, { "error": "token need" });
+            return;
         }
         tokenHandeler._token.verify(requestPropertise.headersObject.token, phone, (err) => {
             if (!err) {
