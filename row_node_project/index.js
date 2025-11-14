@@ -4,8 +4,9 @@ Title : Up time monitoring application
 
 const http = require('http');
 const { handleReqRes } = require('./helper/handle_req_res')
-const environment=require('./helper/env_setup')
-const crudFile=require('./data_crud/data')
+const environment = require('./helper/env_setup')
+const crudFile = require('./data_crud/data')
+const twilio = require('./helper/notification')
 // Scaffolding
 const app = {};
 
@@ -30,12 +31,16 @@ const app = {};
 // console.log(err);
 // })
 
+/// send sms with twilio
+// twilio.sendTwiloSms('01718663032', 'hello world', (error) => {
+//     console.log(`Is there any error :  ${error}`)
+// })
 app.createServer = () => {
     const server = http.createServer(app.handleReqRes);
 
     server.listen(environment.port, () => {
         console.log(`Environment variable is : ${process.env.NODE_ENV}`)
-        console.log(`Lising to port number ${environment .port}`)
+        console.log(`Lising to port number ${environment.port}`)
     })
 }
 

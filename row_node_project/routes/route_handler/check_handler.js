@@ -242,8 +242,60 @@ handler._check.put = (requestPropertise, callback) => {
 
 }
 handler._check.delete = (requestPropertise, callback) => {
-    const phone = typeof requestPropertise.quaryStringObject.phone === 'string' && requestPropertise.quaryStringObject.phone.trim().length > 0 ? requestPropertise.quaryStringObject.phone : false;
+    const id =
+        typeof requestPropertise.quaryStringObject.id === 'string' &&
+            requestPropertise.quaryStringObject.id.trim().length > 0
+            ? requestPropertise.quaryStringObject.id.trim()
+            : false;
+    if (id) {
+        if (!requestPropertise.headersObject.token) {
+            callback(403, { "error": "token need" });
+            return;
+        }
 
+        dataBase.read('checks', id, (err, checkdata) => {
+            if (!err && checkdata) {
+                tokenHandeler._token.verify(requestPropertise.headersObject.token, parseJson(checkdata).phone, (err) => {
+                    if (!err) {
+                        callback(403, { "error": "Unauthenticated" })
+                        return;
+                    }
+                })
+                dataBase.delete('checks', id, (error) => {
+                    if (!error) {
+                        dataBase.read('users', parseJson(checkdata).phone, (err4, userData) => {
+                            if (!err4 && userData) {
+                                let userObject = parseJson(userData);
+                                let checkArray = Array.isArray(userObject.checks) ? userObject.checks : [];
+                                let currentPosition = checkArray.indexOf(id);
+                                if (currentPosition > -1) {
+                                    checkArray.splice(currentPosition, 1);
+                                    userObject.checks = checkArray;
+                                    dataBase.update('users', userObject.phone, userObject, (err5, userUpdateData) => {
+                                        if (!err5) {
+                                            callback(200, userUpdateData)
+                                        } else {
+                                            callback(500, { "error": "not gout chech id for delete" })
+                                        }
+                                    })
+                                } else {
+                                    callback(403, { "error": "not found id in user checks" })
+                                }
+
+                            }
+                        })
+                        callback(200, { "message": "User deleted successfully" });
+                    } else {
+                        callback(500, { "error": error });
+                    }
+                });
+            } else {
+                callback(404, { "error": "check not found" });
+            }
+        });
+    } else {
+        callback(400, { "error": "Invalid check" });
+    }
 };
 
 module.exports = handler;
