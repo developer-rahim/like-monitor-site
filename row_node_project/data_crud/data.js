@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { forEach } = require('lodash');
 const path = require('path');
 const crudFile = {};
 ///  Base directory
@@ -82,4 +83,19 @@ crudFile.delete = (folder, file, callback) => {
         }
     });
 };
+
+crudFile.listData = (dirtory, callback) => {
+    fs.readdir(`${crudFile.baseDir + dirtory}`, (err, filenames) => {
+        if (!err && filenames && filenames.length > 0) {
+            let trimesFileNames = [];
+            filenames.forEach(fileName => {
+                trimesFileNames.push(fileName.replace('.json', ''))
+            })
+
+            callback(false,trimesFileNames)
+        } else {
+            callback(403, { "error": "file not found" })
+        }
+    },)
+}
 module.exports = crudFile;
